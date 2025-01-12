@@ -59,7 +59,9 @@ def report_handler(message):
 
 @bot.message_handler(commands=['category'])
 def category_command(message):
-    bot.send_message(message.chat.id, f"Valid category are [bills, food, commute, others, credit]")
+    user_meta = get_user_meta_add_if_none(message.from_user.username)
+    expense_categories = extract_categories(user_meta)
+    bot.send_message(message.chat.id, f"Valid category are {expense_categories}")
 
 @bot.message_handler(commands=["help"])
 def help_command(message):
