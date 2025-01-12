@@ -4,7 +4,8 @@ import boto3
 from datetime import datetime
 from decimal import Decimal
 import json
-import csv, io
+
+from utils import is_valid_number, split_3_parts, generate_doc
 
 # Initialize the DynamoDB client
 dynamodb = boto3.resource('dynamodb', region_name='ap-southeast-1')  # Change to your region
@@ -33,28 +34,11 @@ def credit_handler(user, value, command, note, message):
         bot.reply_to(message, f"Got it {message.from_user.first_name}, you wanna credit ${value}.")
         save_to_ledger(user, category, float(value) * - 1, note)
 
-def is_valid_number(s):
-    try:
-        # Attempt to convert to float (works for both integers and floats)
-        float(s)
-        return True
-    except ValueError:
-        return False
-
 @bot.message_handler(commands=['report'])
 def report_handler(message):
     expenses = get_expenses(message.from_user.username, current_year_month)
     total = sum(float(expense["value"]) for expense in expenses)
     bot.send_message(message.chat.id, f"you've spend {total} this month.")
-
-def split_3_parts(text):
-    parts = text.split(maxsplit=2)
-    if len(parts) == 1:
-        return parts[0], "", "" 
-    elif len(parts) == 2:
-        return parts[0], parts[1], ""
-    else:
-        return parts[0], parts[1], parts[2]
 
 def save_to_ledger(user, category, value, desc):
     new_expense = {"value": value, "category": category, "notes": desc}
@@ -119,25 +103,6 @@ def get_record_from_ledger(username, year_month):
     return response
   except:
     raise ValueError("Unable to get expenses from DDB")
-
-def generate_doc(data):
-    """
-    csv module can write data in io.StringIO buffer only, python-telegram-bot library can send files 
-    only from io.BytesIO bufferwe need to convert StringIO to BytesIO, extract csv-string, convert 
-    it to bytes and write to buffer.
-    """
-    
-    string_buffer = io.StringIO()
-    csv.writer(string_buffer).writerows(data)
-    string_buffer.seek(0)
-
-    bytes_buffer = io.BytesIO()
-    bytes_buffer.write(string_buffer.getvalue().encode())
-    bytes_buffer.seek(0)
-
-    # set a filename with file's extension
-    bytes_buffer.name = f'spending_report.csv'
-    return bytes_buffer
     
 @bot.message_handler(func=lambda message: True)
 def default_handler(message):

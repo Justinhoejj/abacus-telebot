@@ -5,3 +5,4 @@ src/py*
 !src/
 src/*
 !src/index.py
+!src/utils.py
