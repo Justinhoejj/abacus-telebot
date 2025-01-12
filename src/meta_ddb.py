@@ -16,7 +16,8 @@ def get_user_meta_add_if_none(username):
     if is_new_user:
       default_meta = {
         'username': username,
-        'categories': ['bills', 'food', 'commute', 'others', 'credit']
+        'categories': ['bills', 'commute', 'food', 'others', 'credit'],
+        'joinedAtEpoch': int(datetime.now().timestamp()) 
       }
       meta_table.put_item(Item=default_meta)
       return default_meta
@@ -27,10 +28,26 @@ def get_user_meta_add_if_none(username):
 def extract_categories(user_meta):
   return user_meta['categories']
   
-def set_categories(username, categories_list):
-  default_meta = {
-      'username': username,
-      'categories': categories_list
-  }
-  meta_table.put_item(Item=default_meta)
+def set_categories(username, category):
+  category = category.lower()
+  user_meta = get_user_meta_add_if_none(username)
+  categories = extract_categories(user_meta)
+  if category not in categories:
+      categories.append(category)
+  categories.remove('credit')
+  categories.sort()  
+  categories.append('credit')  # Add 'credit' back to the end
+
+  user_meta['categories'] = categories
+  meta_table.put_item(Item=user_meta)
+  
   return True
+
+def remove_category(username, category):
+    category = category.lower()
+    user_meta = get_user_meta_add_if_none(username)
+    categories = extract_categories(user_meta)
+    if category in categories:
+      categories.remove(category)
+    user_meta['categories'] = categories
+    meta_table.put_item(Item=user_meta)
