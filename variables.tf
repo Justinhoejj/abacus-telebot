@@ -1,9 +1,9 @@
 variable "bot_token" {
-  type = string
+  type      = string
   sensitive = true
 }
 
 variable "bot_token_test" {
-  type = string
+  type      = string
   sensitive = true
 }

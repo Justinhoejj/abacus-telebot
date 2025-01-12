@@ -3,6 +3,7 @@ import telebot
 from datetime import datetime
 
 from ledger_ddb import save_to_ledger, get_record_from_ledger
+from meta_ddb import get_user_meta_add_if_none, set_categories, extract_categories
 from utils import is_valid_number, split_3_parts, generate_doc
 
 # Bot token from environment variable
@@ -73,6 +74,11 @@ def add_expense_handler(message):
     """
     chat_id = message.chat.id
     markup = InlineKeyboardMarkup()
+    
+    user_meta = get_user_meta_add_if_none(message.from_user.username)
+    print("user_meta", user_meta)
+    expense = extract_categories(user_meta)
+    print("expense", expense)
     
     # Add buttons for each category
     for category in expense_categories:

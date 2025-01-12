@@ -1,6 +1,6 @@
 # IAM Role for Lambda
 resource "aws_iam_role" "lambda_exec_role" {
-  name               = "lambda_execution_role"
+  name = "lambda_execution_role"
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
@@ -25,18 +25,20 @@ resource "aws_iam_policy_attachment" "lambda_basic_execution" {
 resource "aws_iam_policy" "lambda_dynamodb_policy" {
   name        = "lambda-dynamodb-policy"
   description = "Policy granting Lambda read/write access to DynamoDB"
-  policy      = jsonencode({
+  policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
       {
-        Action   = [
+        Action = [
           "dynamodb:PutItem",
           "dynamodb:UpdateItem",
           "dynamodb:Query",
           "dynamodb:GetItem"
         ]
-        Effect   = "Allow"
-        Resource = "arn:aws:dynamodb:ap-southeast-1:159947736419:table/abacus-ledger"
+        Effect = "Allow"
+        Resource = [
+          "arn:aws:dynamodb:ap-southeast-1:*:table/abacus-ledger",
+          "arn:aws:dynamodb:ap-southeast-1:*:table/abacus-user-meta"]
       }
     ]
   })
@@ -63,7 +65,7 @@ resource "aws_lambda_function" "my_lambda" {
   runtime       = "python3.9" # Replace with your desired runtime
   handler       = "index.lambda_handler"
   filename      = data.archive_file.lambda_zip.output_path
-  timeout = 30
+  timeout       = 30
 
   # Environment variables (if any)
   environment {
@@ -80,7 +82,7 @@ resource "aws_lambda_function" "abacus-telebot-stg" {
   runtime       = "python3.9" # Replace with your desired runtime
   handler       = "index.lambda_handler"
   filename      = data.archive_file.lambda_zip.output_path
-  timeout = 30
+  timeout       = 30
 
   # Environment variables (if any)
   environment {
