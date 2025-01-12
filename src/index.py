@@ -1,22 +1,16 @@
 import os
 import telebot
-import boto3
 from datetime import datetime
-from decimal import Decimal
-import json
 
+from ledger_ddb import save_to_ledger, get_record_from_ledger
 from utils import is_valid_number, split_3_parts, generate_doc
-
-# Initialize the DynamoDB client
-dynamodb = boto3.resource('dynamodb', region_name='ap-southeast-1')  # Change to your region
-ledger_table = dynamodb.Table('abacus-ledger')  # Replace with your table name
 
 # Bot token from environment variable
 BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 bot = telebot.TeleBot(BOT_TOKEN, threaded = False)
 
 expense_categories = set(['bills', 'food', 'commute', 'others', 'credit'])
-current_year_month = datetime.now().strftime("%Y-%m")
+current_year_month = datetime.now().strftime("%Y-%m") # Clean up duplicate declaration in ledger_ddb
 
 def expense_handler(user, value, command, note, message):
     if not is_valid_number(value):
@@ -40,31 +34,6 @@ def report_handler(message):
     total = sum(float(expense["value"]) for expense in expenses)
     bot.send_message(message.chat.id, f"you've spend {total} this month.")
 
-def save_to_ledger(user, category, value, desc):
-    new_expense = {"value": value, "category": category, "notes": desc}
-    new_expense = json.loads(json.dumps(new_expense), parse_float=Decimal)
-    updated_expenses = []
-    try:
-        response = get_record_from_ledger(user, current_year_month)
-        if 'Item' in response:
-            existing_item = response['Item']
-            existing_expenses = existing_item.get('expenses', [])
-            updated_expenses.extend(existing_expenses)
-        
-        updated_expenses.append(new_expense)
-        # If the item doesn't exist, save the new record
-        updated_item = {
-            'username': user,
-            'year_month': current_year_month,
-            'expenses': updated_expenses
-        }
-        # Insert the new item
-        ledger_table.put_item(Item=updated_item)
-        return "Record inserted successfully."
-    except Exception as e:
-        print(f"Save ledger Error: {e}")
-        return f"Error: {str(e)}"
-    
 @bot.message_handler(commands=['category'])
 def category_command(message):
     bot.send_message(message.chat.id, f"Valid category are [bills, food, commute, others, credit]")
@@ -91,19 +60,6 @@ def get_expenses(username, year_month):
       return expenses
     else:
       return []
-      
-def get_record_from_ledger(username, year_month):
-  try:
-    response = ledger_table.get_item(
-            Key={
-                'username': username,
-                'year_month': year_month
-            }
-        )
-    return response
-  except:
-    raise ValueError("Unable to get expenses from DDB")
-        
 
 #### Interactive add #####
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
