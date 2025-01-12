@@ -16,7 +16,7 @@ def split_2_parts(text):
     if len(parts) == 1:
         return parts[0], ""
     else:
-        return parts[0], parts[1].strip()
+        return parts[0], parts[1]
     
             
 def split_3_parts(text):
