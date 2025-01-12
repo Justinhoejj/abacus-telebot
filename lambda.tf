@@ -55,7 +55,7 @@ resource "aws_iam_policy_attachment" "lambda_dynamodb_execution" {
 data "archive_file" "lambda_zip" {
   type        = "zip"
   source_dir  = "${path.module}/src" # Path to your Lambda source folder
-  output_path = "${path.module}/out/lambda_function_1.zip"
+  output_path = "${path.module}/out/lambda_function_1201.zip"
 }
 
 # Lambda function

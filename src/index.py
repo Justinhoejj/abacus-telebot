@@ -65,14 +65,21 @@ def category_command(message):
 def help_command(message):
   bot.reply_to(message,
                """
-              Accounting commands take the form: 
-              `<value> <category> <optional notes>`
+**Direct-to-action accounting commands** take the form:  
+`<value> <category> <optional notes>`
 
-              For example:
-              `9.45 food mc spicy`
+For example:  
+`9.45 food mc spicy`
 
-              Use `/category` to see all valid accounting categories.  
-              Alternatively, use `*/input*` for an interactive way to add entries.
+Alternatively, use `*/input*` for an interactive way to add entries.
+
+Use `/category` to see all valid accounting categories.  
+
+- Use `/add_category <category>` to add a new category.  
+  For example: `/add_category groceries`
+
+- Use `/remove_category <category>` to remove an existing category.  
+  For example: `/remove_category food`
               """,
       parse_mode="Markdown"
     )
