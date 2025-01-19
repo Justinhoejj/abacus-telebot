@@ -32,8 +32,12 @@ def credit_handler(user, value, command, note, message):
 
 @bot.message_handler(commands=['add_category'])
 def add_category_handler(message):
-  _command, category = split_2_parts(message.text)
-  if is_valid_word(category):
+  bot.reply_to(message, f"Category name?", reply_markup=telebot.types.ForceReply(selective=True))
+
+@bot.message_handler(func=lambda message: message.reply_to_message and "Category name?" in message.reply_to_message.text)
+def add_category_respond(message):
+  category = message.text
+  if is_valid_word(message.text):
     set_categories(message.from_user.username, category)
     bot.reply_to(message, f"Added {category} to expense category.")
   else:
@@ -41,7 +45,11 @@ def add_category_handler(message):
 
 @bot.message_handler(commands=['remove_category'])
 def remove_category_handler(message):
-  _command, category = split_2_parts(message.text)
+  bot.reply_to(message, f"Category to delete?", reply_markup=telebot.types.ForceReply(selective=True))
+
+@bot.message_handler(func=lambda message: message.reply_to_message and "Category to delete?" in message.reply_to_message.text)
+def remove_category_respond(message):
+  category = message.text
   if is_valid_word(category):
     if category.lower() in perm_expense_categories:
       bot.reply_to(message, f"Provided category cannot be removed.")
@@ -50,12 +58,45 @@ def remove_category_handler(message):
       bot.reply_to(message, f"Removed {category} from expense category.")
   else:
     bot.reply_to(message, f"Category has to be a single word")
-
+    
 @bot.message_handler(commands=['report'])
 def report_handler(message):
+    category_emojis = {
+        "bills": "💡",         # Example: Light bulb for bills
+        "food": "🍔",          # Example: Burger for food
+        "groceries": "🛒", # Example: Controller for entertainment
+        "commute": "🚗"
+    }
     expenses = get_expenses(message.from_user.username, current_year_month)
-    total = sum(float(expense["value"]) for expense in expenses)
-    bot.send_message(message.chat.id, f"you've spend {total} this month.")
+    aggregated = {}
+    total_spend = 0
+    total_credit = 0
+    
+    for expense in expenses:
+        category = expense['category']
+        value = float(expense['value'])
+        
+        if category == 'credit':
+          total_credit += value
+          continue
+        
+        total_spend += value
+        if category in aggregated:
+            aggregated[category] += value
+        else:
+            aggregated[category] = value
+
+    # Create the message
+    report = f"💰 *Expense Breakdown:*\n"
+    for category, value in aggregated.items():
+        emoji = category_emojis.get(category, "🎮")  # Default emoji if no match
+        percentage = (value / total_spend) * 100
+        report += f"  - {emoji} *{category.capitalize()}*: ${value:.2f} ({percentage:.2f}%)\n"
+    
+    report += f"\n*Total Expense*: ${total_spend:.2f}"
+    report += f"\n*Total Credit*: ${total_credit:.2f}"
+    report += f"\n📊 *Nett spending*: ${(total_spend+total_credit):.2f}\n\n"
+    bot.send_message(message.chat.id, report, parse_mode="Markdown")
 
 @bot.message_handler(commands=['category'])
 def category_command(message):
