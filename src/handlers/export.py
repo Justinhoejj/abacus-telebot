@@ -31,5 +31,5 @@ def register_export_handlers(bot: telebot.TeleBot):
     bytes_buffer.seek(0)
 
     # set a filename with file's extension
-    bytes_buffer.name = f'spending_report.csv'
+    bytes_buffer.name = f'spending_report_{current_year_month}.csv'
     return bytes_buffer

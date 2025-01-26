@@ -42,8 +42,9 @@ and `/remove_category` to manage custom expense categories.
   
 @bot.message_handler(commands=["undo"])
 def undo_command(message):
-  bot.reply_to(message,"""No undo function implemented, bot was designed as an append only ledger. 
-              Use "credit" category to offset erroneous entries. eg. -20 credit fat fingers.""")
+  bot.reply_to(message,"""
+No undo function implemented, bot was designed as an append only ledger. 
+\nUse "credit" category to offset erroneous entries (eg. -20 credit fat fingers).""")
     
 
 @bot.message_handler(func=lambda message: True)

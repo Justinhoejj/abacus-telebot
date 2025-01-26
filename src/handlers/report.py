@@ -24,7 +24,7 @@ def register_report_handlers(bot: telebot.TeleBot):
           else:
               aggregated[category] = value
 
-      report = f"💰 *Expense Breakdown:*\n"
+      report = f"💰 *Expense Breakdown ({current_year_month}):*\n"
       for category, value in aggregated.items():
           emoji = category_emojis.get(category, "🎮")
           percentage = (value / total_spend) * 100
