@@ -1,6 +1,6 @@
-# A BASIC ACCOUNTING CHATBOT for UNTRACKED SPENDING
+# A BASIC ACCOUNTING CHATBOT for UNTRACKED SPENDING (ABACUS)
 
-This repository hosts the source code and infrastructure for the ABACUS Telegram Bot. The bot is running on a serverless backend hosted on Amazon Web Services. The bot leverages AWS Lambda, API Gateway, and DynamoDB for data persistence. Infrastructure is managed using Terraform.
+This repository hosts the source code and infrastructure for the [ABACUS Telegram Bot](https://t.me/abacus_io_bot). The bot is running on a serverless backend hosted on Amazon Web Services. The bot leverages AWS Lambda, API Gateway, and DynamoDB for data persistence. Infrastructure is managed using Terraform.
 
 ## Project Structure  
 
