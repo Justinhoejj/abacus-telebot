@@ -2,7 +2,7 @@ import telebot
 
 from meta_ddb import set_categories, remove_category
 from utils import is_valid_word
-from constants import perm_expense_categories
+from variables import perm_expense_categories
 
 def register_category_handlers(bot: telebot.TeleBot):
   @bot.message_handler(commands=['add_category'])
