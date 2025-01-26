@@ -48,6 +48,9 @@ resource "aws_lambda_function" "my_lambda" {
   }
   layers     = [aws_lambda_layer_version.lambda_layer.arn]
   depends_on = [terraform_data.release_version]
+  lifecycle {
+    replace_triggered_by = [terraform_data.replacement]
+  }
 }
 
 resource "terraform_data" "register_web_token" {
