@@ -38,9 +38,9 @@ resource "aws_lambda_function" "my_lambda" {
   role          = aws_iam_role.lambda_exec_role.arn
   runtime       = "python3.11"
   handler       = "index.lambda_handler"
-  filename      = "${path.module}/out/lambda_src_0.1.zip"
+  filename      = local.prd_src_output_path
   timeout       = 10
-
+  source_code_hash = var.abacus_version
   environment {
     variables = {
       TELEGRAM_BOT_TOKEN = var.bot_token
