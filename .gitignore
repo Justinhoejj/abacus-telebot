@@ -1,10 +1,4 @@
 .terraform
 .venv
 out
-src/py*
-!src/
-src/*
-!src/index.py
-!src/utils.py
-!src/ledger_ddb.py
-!src/meta_ddb.py
+src/layers
