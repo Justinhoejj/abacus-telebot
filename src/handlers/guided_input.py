@@ -3,10 +3,9 @@ import telebot
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 from utils import split_2_parts
 from meta_ddb import get_user_meta_add_if_none, extract_categories
-from accounting import credit_handler, expense_handler
+from accounting import expense_handler
 
 def register_guided_input_handlers(bot: telebot.TeleBot):
-
   @bot.message_handler(commands=['input'])
   def input_handler(message):
       """
@@ -51,9 +50,6 @@ def register_guided_input_handlers(bot: telebot.TeleBot):
       # Extract the category from the reply-to message
       category = message.reply_to_message.text.split("selected")[0].strip()  # Extract the category name from the prompt
       # Validate the entered value
-      value, note = split_2_parts(message.text.strip())
-      if category == "credit":
-        credit_handler(bot, message.from_user.username, value, category, note, message)
-      else:
-        expense_handler(bot, message.from_user.username, value, category, note, message)
+      value, note = split_2_parts(message.text.strip())  
+      expense_handler(bot, message.from_user.username, value, category, note, message)
       input_handler(message) # Display buttons for next input
