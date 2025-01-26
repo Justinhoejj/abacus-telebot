@@ -1,42 +1,18 @@
 import os
 import telebot
-from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
-from datetime import datetime
 
-from ledger_ddb import save_to_ledger, get_record_from_ledger
+from ledger_ddb import get_record_from_ledger
 from meta_ddb import get_user_meta_add_if_none, extract_categories
-from utils import is_valid_number, split_2_parts, split_3_parts, generate_doc
-from handlers import category
+from utils import split_3_parts, generate_doc
+from accounting import credit_handler, expense_handler
+from handlers import category, guided_input
 # Bot token from environment variable
 BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 bot = telebot.TeleBot(BOT_TOKEN, threaded = False)
 
 category.register_category_handlers(bot)
+guided_input.register_guided_input_handlers(bot)
 
-perm_expense_categories = set(['bills', 'food', 'commute', 'others', 'credit'])
-category_emojis = {
-    "bills": "💡",
-    "food": "🍔",
-    "groceries": "🛒",
-    "commute": "🚗"
-}
-current_year_month = datetime.now().strftime("%Y-%m") # Clean up duplicate declaration in ledger_ddb
-
-def expense_handler(user, value, command, note, message):
-    if not is_valid_number(value):
-        bot.reply_to(message, f"Dumbass you gotta tell me how much you spent")
-    else:
-        category = command
-        bot.reply_to(message, f"Got it {message.from_user.first_name}, you spent ${value} on {category}.")
-        save_to_ledger(user, category, value, note)
-
-def credit_handler(user, value, command, note, message):
-    if not is_valid_number(value):
-        bot.reply_to(message, f"Dumbass you gotta tell me how much you wanna credit")
-    else:
-        category = command
-        bot.reply_to(message, f"Got it {message.from_user.first_name}, you wanna credit ${value}.")
-        save_to_ledger(user, category, float(value) * - 1, note)
     
 @bot.message_handler(commands=['report'])
 def report_handler(message):
@@ -117,57 +93,6 @@ def get_expenses(username, year_month):
       return expenses
     else:
       return []
-
-@bot.message_handler(commands=['input'])
-def input_handler(message):
-    """
-    Handles the /input command by showing a list of expense categories as buttons.
-    """
-    chat_id = message.chat.id
-    markup = InlineKeyboardMarkup()
-    
-    user_meta = get_user_meta_add_if_none(message.from_user.username)
-    expense_categories = extract_categories(user_meta)
-    
-    # Add buttons for each category
-    for category in expense_categories:
-        markup.add(InlineKeyboardButton(category.capitalize(), callback_data=f"category_{category}"))
-    
-    bot.send_message(chat_id, "Select an expense category to log when ready:", reply_markup=markup)
-
-@bot.callback_query_handler(func=lambda call: call.data.startswith("category_"))
-def category_selected_handler(call):
-    """
-    Handles the category selection from the inline keyboard buttons.
-    """
-    chat_id = call.message.chat.id
-    category = call.data.split("_")[1]  # Extract category from callback data
-
-    # Prompt user for the expense value, include category in the message
-    bot.send_message(
-        chat_id,
-        # Coupled to expense_value_handler careful when modifying
-        f"*{category}* selected. Enter amount followed by optional notes (eg. \"4.20 train to Busan\"):", 
-        parse_mode="Markdown",
-        reply_markup=telebot.types.ForceReply(selective=True),  # Force reply
-    )
-    bot.answer_callback_query(call.id)  # Acknowledge callback
-
-
-@bot.message_handler(func=lambda message: message.reply_to_message and "selected. Enter amount followed by optional notes" in message.reply_to_message.text)
-def expense_value_handler(message):
-    """
-    Handles the input of the expense value after the category is selected.
-    """
-    # Extract the category from the reply-to message
-    category = message.reply_to_message.text.split("selected")[0].strip()  # Extract the category name from the prompt
-    # Validate the entered value
-    value, note = split_2_parts(message.text.strip())
-    if category == "credit":
-      credit_handler(message.from_user.username, value, category, note, message)
-    else:
-      expense_handler(message.from_user.username, value, category, note, message)
-    input_handler(message) # Display buttons for next input
     
 
 @bot.message_handler(func=lambda message: True)
@@ -178,9 +103,9 @@ def default_handler(message):
     user_meta = get_user_meta_add_if_none(message.from_user.username)
     expense_categories = extract_categories(user_meta)
     if command in expense_categories:
-        expense_handler(user, value, command, note, message)
+        expense_handler(bot, user, value, command, note, message)
     elif command == "credit":
-        credit_handler(user, value, command, note, message)
+        credit_handler(bot, user, value, command, note, message)
     else:
         bot.send_message(message.chat.id, "Invalid command, not smart enough to understand that")
 
