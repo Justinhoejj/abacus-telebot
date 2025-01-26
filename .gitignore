@@ -1,5 +1,5 @@
 .terraform
-*.tfvars
+terraform.tfvars
 .venv
 out
 src/layers

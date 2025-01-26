@@ -14,7 +14,7 @@ resource "aws_apigatewayv2_integration" "lambda_integration" {
 # Route for API Gateway
 resource "aws_apigatewayv2_route" "default_route" {
   api_id    = aws_apigatewayv2_api.http_api.id
-  route_key = "ANY /{proxy+}" # Matches all HTTP methods and paths
+  route_key = "ANY ${local.prd_route}" # Matches all HTTP methods and paths
   target    = "integrations/${aws_apigatewayv2_integration.lambda_integration.id}"
 }
 
