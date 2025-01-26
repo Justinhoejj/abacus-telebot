@@ -4,14 +4,22 @@ from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 from datetime import datetime
 
 from ledger_ddb import save_to_ledger, get_record_from_ledger
-from meta_ddb import get_user_meta_add_if_none, set_categories, extract_categories, remove_category
-from utils import is_valid_number, split_2_parts, split_3_parts, generate_doc, is_valid_word
-
+from meta_ddb import get_user_meta_add_if_none, extract_categories
+from utils import is_valid_number, split_2_parts, split_3_parts, generate_doc
+from handlers import category
 # Bot token from environment variable
 BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 bot = telebot.TeleBot(BOT_TOKEN, threaded = False)
 
+category.register_category_handlers(bot)
+
 perm_expense_categories = set(['bills', 'food', 'commute', 'others', 'credit'])
+category_emojis = {
+    "bills": "💡",
+    "food": "🍔",
+    "groceries": "🛒",
+    "commute": "🚗"
+}
 current_year_month = datetime.now().strftime("%Y-%m") # Clean up duplicate declaration in ledger_ddb
 
 def expense_handler(user, value, command, note, message):
@@ -29,44 +37,9 @@ def credit_handler(user, value, command, note, message):
         category = command
         bot.reply_to(message, f"Got it {message.from_user.first_name}, you wanna credit ${value}.")
         save_to_ledger(user, category, float(value) * - 1, note)
-
-@bot.message_handler(commands=['add_category'])
-def add_category_handler(message):
-  bot.reply_to(message, f"Category name?", reply_markup=telebot.types.ForceReply(selective=True))
-
-@bot.message_handler(func=lambda message: message.reply_to_message and "Category name?" in message.reply_to_message.text)
-def add_category_respond(message):
-  category = message.text
-  if is_valid_word(message.text):
-    set_categories(message.from_user.username, category)
-    bot.reply_to(message, f"Added {category} to expense category.")
-  else:
-    bot.reply_to(message, f"Category has to be a single word")
-
-@bot.message_handler(commands=['remove_category'])
-def remove_category_handler(message):
-  bot.reply_to(message, f"Category to delete?", reply_markup=telebot.types.ForceReply(selective=True))
-
-@bot.message_handler(func=lambda message: message.reply_to_message and "Category to delete?" in message.reply_to_message.text)
-def remove_category_respond(message):
-  category = message.text
-  if is_valid_word(category):
-    if category.lower() in perm_expense_categories:
-      bot.reply_to(message, f"Provided category cannot be removed.")
-    else: 
-      remove_category(message.from_user.username, category)
-      bot.reply_to(message, f"Removed {category} from expense category.")
-  else:
-    bot.reply_to(message, f"Category has to be a single word")
     
 @bot.message_handler(commands=['report'])
 def report_handler(message):
-    category_emojis = {
-        "bills": "💡",         # Example: Light bulb for bills
-        "food": "🍔",          # Example: Burger for food
-        "groceries": "🛒", # Example: Controller for entertainment
-        "commute": "🚗"
-    }
     expenses = get_expenses(message.from_user.username, current_year_month)
     aggregated = {}
     total_spend = 0
@@ -86,10 +59,9 @@ def report_handler(message):
         else:
             aggregated[category] = value
 
-    # Create the message
     report = f"💰 *Expense Breakdown:*\n"
     for category, value in aggregated.items():
-        emoji = category_emojis.get(category, "🎮")  # Default emoji if no match
+        emoji = category_emojis.get(category, "🎮")
         percentage = (value / total_spend) * 100
         report += f"  - {emoji} *{category.capitalize()}*: ${value:.2f} ({percentage:.2f}%)\n"
     
